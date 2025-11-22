@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Delphi Engine v0</title>
+  <style>
+    :root {
+      --bg-start: #050611;
+      --bg-end: #0b1c2e;
+      --accent: #6ae1ff;
+      --accent-2: #ff9f40;
+      --card: rgba(255, 255, 255, 0.06);
+      --card-strong: rgba(255, 255, 255, 0.12);
+      --text-main: #e8f2ff;
+      --text-dim: #9fb4d6;
+      --success: #73f59f;
+      --warn: #ffd166;
+      --danger: #ff6b81;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Space Grotesk', 'Inter', system-ui, -apple-system, sans-serif;
+      color: var(--text-main);
+      background:
+        radial-gradient(circle at 15% 20%, rgba(106, 225, 255, 0.2), transparent 25%),
+        radial-gradient(circle at 85% 30%, rgba(255, 159, 64, 0.15), transparent 24%),
+        linear-gradient(140deg, var(--bg-start), var(--bg-end));
+      min-height: 100vh;
+    }
+    .stars {
+      position: fixed; inset: 0; pointer-events: none; background-image:
+        radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.7), transparent),
+        radial-gradient(1px 1px at 30% 80%, rgba(255,255,255,0.5), transparent),
+        radial-gradient(1px 1px at 70% 40%, rgba(255,255,255,0.6), transparent),
+        radial-gradient(1px 1px at 90% 60%, rgba(255,255,255,0.4), transparent);
+      opacity: 0.7;
+      animation: twinkle 6s ease-in-out infinite alternate;
+    }
+    @keyframes twinkle { from { opacity: 0.4; } to { opacity: 0.9; } }
+    header {
+      padding: 48px 8vw 24px;
+      display: grid;
+      grid-template-columns: 1.6fr 1fr;
+      gap: 18px;
+      position: relative;
+      z-index: 1;
+    }
+    .brand h1 {
+      margin: 0;
+      font-size: 36px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+    .brand p { margin: 10px 0 0; color: var(--text-dim); max-width: 720px; line-height: 1.6; }
+    .slogan {
+      margin-top: 14px;
+      display: inline-flex;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 14px;
+      background: linear-gradient(120deg, rgba(106,225,255,0.15), rgba(255,159,64,0.12));
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 14px;
+      color: #eaf6ff;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+    .actions { display: flex; gap: 12px; }
+    button {
+      background: linear-gradient(120deg, var(--accent), #7bf2ff);
+      border: none;
+      color: #0a1421;
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 10px 40px rgba(92, 240, 228, 0.35);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    button:hover { transform: translateY(-2px); box-shadow: 0 15px 50px rgba(92,240,228,0.45); }
+    main { padding: 0 8vw 64px; position: relative; z-index: 1; }
+    .grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); margin-bottom: 24px; }
+    .card {
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 18px;
+      padding: 18px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+    }
+    .card.highlight {
+      border: 1px solid rgba(106,225,255,0.35);
+      box-shadow: 0 18px 60px rgba(106,225,255,0.12);
+    }
+    .card h3 { margin: 0 0 6px; font-size: 16px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-dim); }
+    .headline { font-size: 22px; margin: 8px 0 12px; }
+    .tag { display: inline-block; padding: 6px 10px; border-radius: 999px; background: rgba(255,255,255,0.08); margin-right: 6px; font-size: 12px; }
+    .pill-line { display: inline-flex; gap: 8px; align-items: center; padding: 8px 10px; background: rgba(255,255,255,0.05); border-radius: 999px; border: 1px solid rgba(255,255,255,0.08); }
+    .pill { padding: 4px 10px; border-radius: 999px; font-weight: 700; }
+    .pill.green { background: rgba(115, 245, 159, 0.1); color: var(--success); border: 1px solid rgba(115, 245, 159, 0.4); }
+    .pill.red { background: rgba(255, 107, 129, 0.1); color: var(--danger); border: 1px solid rgba(255, 107, 129, 0.4); }
+    .pill.yellow { background: rgba(255, 209, 102, 0.1); color: var(--warn); border: 1px solid rgba(255, 209, 102, 0.4); }
+    .timeline { border-left: 2px solid rgba(255,255,255,0.1); padding-left: 16px; }
+    .timeline-item { position: relative; padding: 8px 0 8px 12px; }
+    .timeline-item::before { content: ''; position: absolute; left: -20px; top: 12px; width: 10px; height: 10px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 0 6px rgba(92,240,228,0.18); }
+    pre { background: rgba(0,0,0,0.35); padding: 12px; border-radius: 12px; overflow: auto; color: var(--text-main); border: 1px solid rgba(255,255,255,0.05); }
+    .logs { max-height: 260px; overflow: auto; font-family: 'SFMono-Regular', ui-monospace, monospace; font-size: 13px; }
+    .section-title { margin: 24px 0 12px; font-size: 14px; letter-spacing: 1px; color: var(--text-dim); text-transform: uppercase; }
+    a { color: var(--accent); text-decoration: none; }
+    .footer { text-align: center; color: var(--text-dim); font-size: 12px; padding: 24px 0 12px; }
+    .spark {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.05);
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+    .spark.bright { border-color: rgba(106,225,255,0.4); color: #dff7ff; }
+    .arc {
+      position: absolute; top: 20px; right: 10%; width: 320px; height: 120px;
+      background: radial-gradient(circle at 50% 0%, rgba(106,225,255,0.25), transparent 60%);
+      filter: blur(60px); opacity: 0.6; pointer-events: none;
+    }
+    .logs.collapsed { max-height: 120px; }
+  </style>
+</head>
+<body>
+  <div class="stars"></div>
+  <div class="arc"></div>
+  <header>
+    <div class="brand">
+      <h1>THE DELPHI ENGINE · v0</h1>
+      <p>Multi-agent × Blackboard orchestration for critical signals. Regulatory shock → microstructure turbulence → sector rotations, fused into one decision stream.</p>
+      <div class="slogan">⚡ LIVE DEMO · A2A / LLM / SSE</div>
+      <div id="conn-status" style="margin-top:6px;color:var(--text-dim);font-size:12px;">Awaiting connection...</div>
+    </div>
+    <div class="actions" style="align-items:flex-end; justify-content:flex-end; gap:10px; flex-wrap:wrap;">
+      <div id="task-pill" class="pill-line" style="min-width:220px;">Task: —</div>
+      <button id="run-btn">Run Scenario</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="grid">
+      <div class="card highlight" id="news-card">
+        <h3>Input Signal</h3>
+        <div class="headline" id="news-headline">Awaiting input…</div>
+        <div id="news-meta" style="color: var(--text-dim);"></div>
+      </div>
+      <div class="card" id="task-card">
+        <h3>A2A Task</h3>
+        <div class="headline" id="task-status">—</div>
+        <div id="task-meta" style="color: var(--text-dim);"></div>
+      </div>
+      <div class="card" id="global-card">
+        <h3>Global View</h3>
+        <div class="headline" id="conflict">—</div>
+        <div id="global-tags"></div>
+      </div>
+      <div class="card highlight" id="decision-card">
+        <h3>Unified Decision</h3>
+        <div class="headline" id="decision-headline">—</div>
+        <div id="decision-detail"></div>
+      </div>
+    </div>
+
+    <div class="section-title">Agents</div>
+    <div class="grid" id="agents-grid">
+      <div class="card" id="agent-policy">
+        <h3>Macro-Policy Agent</h3>
+        <div class="headline" id="agent-policy-head">—</div>
+        <div id="agent-policy-body" style="color: var(--text-dim);"></div>
+        <div id="agent-policy-anno" style="margin-top:10px;"></div>
+      </div>
+      <div class="card" id="agent-micro">
+        <h3>Market-Microstructure Agent</h3>
+        <div class="headline" id="agent-micro-head">—</div>
+        <div id="agent-micro-body" style="color: var(--text-dim);"></div>
+        <div id="agent-micro-anno" style="margin-top:10px;"></div>
+      </div>
+      <div class="card" id="agent-sector">
+        <h3>Sector Rotation Agent</h3>
+        <div class="headline" id="agent-sector-head">—</div>
+        <div id="agent-sector-body" style="color: var(--text-dim);"></div>
+        <div id="agent-sector-anno" style="margin-top:10px;"></div>
+      </div>
+    </div>
+
+    <div class="section-title">Timeline</div>
+    <div class="card timeline" id="timeline"></div>
+
+    <div class="section-title">Raw Decision & Follow-up</div>
+    <div class="grid">
+      <div class="card">
+        <h3>Follow-up</h3>
+        <pre id="followup-json">等待…</pre>
+      </div>
+      <div class="card">
+        <h3>Decision</h3>
+        <pre id="decision-json">等待…</pre>
+      </div>
+    </div>
+
+    <div class="section-title">Live Logs</div>
+    <div class="card logs collapsed" id="logs"></div>
+  </main>
+  <div class="footer">Delphi Engine v0 · Multi-Agent × Blackboard · Demo</div>
+
+  <script>
+    const ENGINE_BASE = (location.port === '4173') ? 'http://localhost:3000' : '';
+    const timeline = document.getElementById('timeline');
+    const logs = document.getElementById('logs');
+    const runBtn = document.getElementById('run-btn');
+    const connStatus = document.getElementById('conn-status');
+    let lastTaskSnapshot = {};
+    let latestAnnotations = {};
+    let lastEventType = '—';
+    const logsBox = document.getElementById('logs');
+
+    runBtn.onclick = () => {
+      runBtn.disabled = true;
+      runBtn.textContent = '运行中…';
+      fetch(`${ENGINE_BASE}/api/run`, { method: 'POST' }).catch(console.error).finally(() => {
+        setTimeout(() => { runBtn.disabled = false; runBtn.textContent = '运行一次场景'; }, 1000);
+      });
+    };
+
+    function appendTimeline(evt) {
+      const item = document.createElement('div');
+      item.className = 'timeline-item';
+      const ts = new Date(evt.ts || Date.now()).toLocaleTimeString();
+      const tone = toneColor(evt.type);
+      item.innerHTML = `<div style="color: ${tone};">${ts} · ${evt.type}</div><div>${formatShort(evt)}</div>`;
+      timeline.prepend(item);
+      lastEventType = evt.type;
+      updateTaskPill();
+    }
+
+    function appendLog(evt) {
+      const ts = new Date(evt.ts || Date.now()).toISOString();
+      const line = `[${ts}] ${evt.type}: ${JSON.stringify(evt.data).slice(0, 500)}`;
+      const div = document.createElement('div');
+      div.textContent = line;
+      logs.prepend(div);
+      while (logs.childNodes.length > 200) logs.removeChild(logs.lastChild);
+    }
+
+    function formatShort(evt) {
+      switch (evt.type) {
+        case 'news': return evt.data?.headline || 'news received';
+        case 'opinions': return '三路观点已到位';
+        case 'global_view': return `冲突: ${evt.data?.conflict}`;
+        case 'follow_up': return evt.data?.question || 'follow-up';
+        case 'decision': return '统一决策生成';
+        case 'a2a.message': return `msg ${evt.data?.message?.role || ''}`;
+        case 'a2a.task_status': return `${evt.data?.status?.state}`;
+        default: return '';
+      }
+    }
+
+    function updateState(state) {
+      if (state.news) {
+        document.getElementById('news-headline').textContent = state.news.headline;
+        document.getElementById('news-meta').textContent = `${state.news.source} @ ${state.news.fetchedAt}`;
+      }
+      if (state.opinions) {
+        updateAgentCards(state.opinions);
+      }
+      if (state.globalView) updateGlobal(state.globalView);
+      if (state.decision) updateDecision(state.decision);
+      if (state.followUp) {
+        document.getElementById('followup-json').textContent = JSON.stringify(state.followUp, null, 2);
+      }
+      if (state.decision) {
+        document.getElementById('decision-json').textContent = JSON.stringify(state.decision, null, 2);
+      }
+      if (state.lastTask) {
+        lastTaskSnapshot = { ...lastTaskSnapshot, ...state.lastTask };
+        updateTask(lastTaskSnapshot);
+      }
+      if (state.annotations) {
+        latestAnnotations = state.annotations;
+        renderAnnotations(state.annotations);
+      }
+      if (state.logs) {
+        logs.innerHTML = '';
+        state.logs.slice().reverse().forEach((evt) => appendLog(evt));
+      }
+    }
+
+    function updateAgentCards(op) {
+      const policy = asObj(op.macroPolicy);
+      const micro = asObj(op.microStructure);
+      const sector = asObj(op.sectorRotation);
+
+      document.getElementById('agent-policy-head').innerHTML = `${pill('yellow', policy.reg_policy_impact || '—')} · 概率 ${policy.likelihood ?? ''}`;
+      document.getElementById('agent-policy-body').textContent = policy.risk_scenario || fallbackRaw(op.macroPolicy);
+
+      document.getElementById('agent-micro-head').innerHTML = `${pill('red', micro.volatility_estimate || '—')} · 费率 ${micro.funding_rate_change || '—'}`;
+      document.getElementById('agent-micro-body').textContent = `流向: ${(micro.flow_signals || []).join(' / ') || fallbackRaw(op.microStructure)}`;
+
+      document.getElementById('agent-sector-head').innerHTML = `${pill('green', (sector.rotation_recommendation || '—'))}`;
+      document.getElementById('agent-sector-body').textContent = `受益: ${(sector.winning_sectors || []).join(', ')} | 受损: ${(sector.losing_sectors || []).join(', ')}` || fallbackRaw(op.sectorRotation);
+      renderAnnotations(latestAnnotations);
+    }
+
+    function asObj(val) {
+      if (val && typeof val === 'object') return val;
+      return {};
+    }
+
+    function fallbackRaw(val) {
+      if (!val) return '—';
+      if (typeof val === 'string') return val;
+      try { return JSON.stringify(val); } catch (_) { return '—'; }
+    }
+
+    function updateGlobal(view) {
+      document.getElementById('conflict').textContent = view.conflict;
+      const box = document.getElementById('global-tags');
+      box.innerHTML = '';
+      ['macro_policy', 'microstructure', 'sector_rotation'].forEach((k) => {
+        const span = document.createElement('span');
+        span.className = 'tag';
+        span.textContent = `${k}: ${view[k] || '—'}`;
+        box.appendChild(span);
+      });
+      (view.risks || []).forEach((r) => {
+        const span = document.createElement('span');
+        span.className = 'tag';
+        span.style.border = '1px solid rgba(255,255,255,0.15)';
+        span.textContent = `risk: ${r}`;
+        box.appendChild(span);
+      });
+    }
+
+    function updateDecision(decision) {
+      const d = decision?.decision || {};
+      document.getElementById('decision-headline').textContent = d.focus || 'portfolio';
+      const tags = [];
+      (d.macro_actions || []).slice(0, 2).forEach((a) => tags.push(`宏观: ${a.type || ''} ${a.comment || ''}`));
+      (d.micro_actions || []).slice(0, 2).forEach((a) => tags.push(`微观: ${a.type || ''} ${a.comment || ''}`));
+      (d.sector_actions || []).slice(0, 2).forEach((a) => tags.push(`赛道: ${a.type || ''} ${a.sector || ''} ${a.size || ''}`));
+      if (d.micro_follow_up?.adjustment_needed !== undefined) tags.push(`跟进: 调整 ${d.micro_follow_up.adjustment_needed}`);
+      (d.peer_comments || []).slice(0, 3).forEach((c) => tags.push(`评注 ${c.from}->${c.target}: ${c.label} ${c.comment}`));
+      document.getElementById('decision-detail').innerHTML = tags.map((t) => `<div class="tag">${t}</div>`).join('');
+    }
+
+    function updateTask(task) {
+      document.getElementById('task-status').textContent = `${task.status?.state || ''}`;
+      document.getElementById('task-meta').textContent = `task=${task.id || ''} context=${task.context_id || ''} history=${task.history?.length || 0}`;
+      updateTaskPill(task);
+    }
+
+    function renderAnnotations(annos) {
+      const map = {
+        policy: 'macroPolicy',
+        micro: 'microStructure',
+        sector: 'sectorRotation',
+      };
+      ['policy', 'micro', 'sector'].forEach((key) => {
+        const el = document.getElementById(`agent-${key}-anno`);
+        if (!el) return;
+        const incoming = [];
+        Object.entries(annos || {}).forEach(([from, list]) => {
+          list.forEach((a) => { if (a.target === map[key]) incoming.push({ from, ...a }); });
+        });
+        el.innerHTML = incoming.slice(0, 3).map((a) => `<span class="tag" style="margin-top:4px; display:inline-block;">${a.from}→${a.target}: ${a.label}</span>`).join('') || '<span style="color:var(--text-dim);font-size:12px;">暂无标注</span>';
+      });
+    }
+
+    function pill(color, text) {
+      return `<span class="pill ${color}">${text}</span>`;
+    }
+
+    function toneColor(type) {
+      if (!type) return 'var(--text-dim)';
+      if (type === 'decision') return '#6ae1ff';
+      if (type === 'follow_up') return '#ffd166';
+      if (type === 'opinions') return '#73f59f';
+      if (type === 'annotations') return '#b0a8ff';
+      return 'var(--text-dim)';
+    }
+
+    function updateTaskPill(task) {
+      const pill = document.getElementById('task-pill');
+      const id = task?.id || lastTaskSnapshot?.id || '—';
+      const st = task?.status?.state || lastTaskSnapshot?.status?.state || '—';
+      pill.innerHTML = `<span style="color:var(--text-dim)">Task</span> ${id} · <span style="color:var(--accent)">${st}</span> · last: ${lastEventType}`;
+    }
+
+    function connectSSE() {
+      const es = new EventSource(`${ENGINE_BASE}/events`);
+      es.onopen = () => { connStatus.textContent = 'Connected to engine'; connStatus.style.color = 'var(--success)'; };
+      es.onmessage = (msg) => {
+        try { const evt = JSON.parse(msg.data); handleEvent(evt); } catch (e) { console.error(e); }
+      };
+      es.onerror = () => { connStatus.textContent = 'Waiting for engine or connection lost'; connStatus.style.color = 'var(--warn)'; };
+    }
+
+    function handleEvent(evt) {
+      appendTimeline(evt);
+      appendLog(evt);
+      switch (evt.type) {
+        case 'news': updateState({ news: evt.data }); break;
+        case 'opinions': updateState({ opinions: evt.data }); break;
+        case 'global_view': updateState({ globalView: evt.data }); break;
+        case 'follow_up': updateState({ followUp: evt.data }); break;
+        case 'decision': updateState({ decision: evt.data }); break;
+        case 'a2a.message': if (evt.data?.task_id) updateState({ lastTask: { id: evt.data.task_id } }); break;
+        case 'a2a.task_status': if (evt.data?.task_id) updateState({ lastTask: { id: evt.data.task_id, status: evt.data.status } }); break;
+        case 'annotations': updateState({ annotations: evt.data }); break;
+      }
+    }
+
+    async function bootstrap() {
+      try {
+        const state = await fetch(`${ENGINE_BASE}/api/state`).then((r) => r.json());
+        updateState(state);
+      } catch (e) {
+        connStatus.textContent = '前端就绪，等待 engine 启动'; connStatus.style.color = 'var(--warn)';
+      }
+      connectSSE();
+    }
+
+    bootstrap();
+  </script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "name": "the-delphi-engine-v0",
+  "version": "1.0.0",
+  "description": "Delphi Engine v0 multi-agent + blackboard demo",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node src/server.js",
+    "start": "node src/server.js",
+    "engine": "node src/server.js",
+    "ui": "serve public -l 4173"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "openai": "^6.9.1"
+  },
+  "devDependencies": {
+    "serve": "^14.2.5"
+  }
+}
